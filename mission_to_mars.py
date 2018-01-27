@@ -1,9 +1,3 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
 # Dependencies
 import os
 from bs4 import BeautifulSoup as bs
@@ -15,6 +9,8 @@ from textblob import TextBlob, Word, Blobber
 import time
 import pandas as pd
 import urllib3,certifi
+import pymongo
+import datetime
 
 # Twitter API Keys
 from config import *
@@ -23,10 +19,6 @@ from config import *
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
 api = tweepy.API(auth, parser=tweepy.parsers.JSONParser())
-
-
-# In[2]:
-
 
 #get headline and text from NASA website
 url = "https://mars.nasa.gov/news/"
@@ -42,19 +34,11 @@ news_p = soup.find('div', class_="rollover_description").text.strip('\t\r\n')
 #print(news_title)
 #print(news_p)
 
-
-# In[3]:
-
-
 #Get Mars weather from twitter
 user='@marswxreport'
 tweet = api.user_timeline(user, count = 1)
 mars_weather = tweet[0]['text']
 #print(mars_weather)
-
-
-# In[4]:
-
 
 #Get Featured Mars image
 executable_path = {'executable_path': 'chromedriver.exe'}
@@ -67,16 +51,6 @@ browser.quit()
 
 output = soup.find_all('article')
 featured_image_url="https://www.jpl.nasa.gov"+output[0].find("a")["data-fancybox-href"]
-
-
-# In[5]:
-
-
-get_ipython().run_cell_magic('capture', '', '\n\n\n\'\'\'#Scrape the headline and text for the most recent article. Strip the escape characters.\nnews_title = soup.find(\'div\', class_="content_title").find("a").text.strip(\'\\t\\r\\n\')\nnews_p = soup.find(\'div\', class_="rollover_description").text.strip(\'\\t\\r\\n\')\n\nprint(news_title)\nprint(news_p)\'\'\'')
-
-
-# In[13]:
-
 
 #scrape the table containing facts about the planet including Diameter, Mass, etc.
 
@@ -120,31 +94,99 @@ df=pd.DataFrame(contents,headings)
 #convert to HTML table
 d = {'col1': headings, 'col2': contents}
 df = pd.DataFrame(data=contents, index=headings)
-#df
 df_html_output = df.to_html(header=False)
-#df_html_output
 
 #This includes a bunch of \n at the top which is lame but idk how to make it go away
 
 
-# In[ ]:
 
 
-'''Mars Hemisperes
-Visit the USGS Astrogeology site here to obtain high resolution images for each of Mar's hemispheres.
 
-You will need to click each of the links to the hemispheres in order to find the image url to the full resolution image.
+#################################################
+# Flask Setup
+#################################################
 
-Save both the image url string for the full resolution hemipshere image, and the Hemisphere title containing the hemisphere name. Use a Python dictionary to store the data using the keys img_url and title.
+from flask import Flask, jsonify, render_template
 
-Append the dictionary with the image url string and the hemisphere title to a list. This list will contain one dictionary for each hemisphere.
+app = Flask(__name__)
 
-# Example:
-hemisphere_image_urls = [
-    {"title": "Valles Marineris Hemisphere", "img_url": "..."},
-    {"title": "Cerberus Hemisphere", "img_url": "..."},
-    {"title": "Schiaparelli Hemisphere", "img_url": "..."},
-    {"title": "Syrtis Major Hemisphere", "img_url": "..."},
-]
-'''
+#################################################
+# Flask Routes
+#################################################
 
+@app.route("/scrape")
+
+def scrape():
+    
+    #get timestamp
+    now=datetime.datetime.now()
+    timestamp=datetime.datetime.strftime(now, '%Y-%m-%d %H:%M%p')
+
+    # Module used to connect Python with MongoDb
+    import pymongo
+    conn = 'mongodb://localhost:27017'
+    client = pymongo.MongoClient(conn)
+    db = client.marsDB
+
+    output = {
+        "timestamp":timestamp,
+        "news_title":news_title,
+        "news_p":news_p,
+        "mars_weather":mars_weather,
+        "featured_image_url":featured_image_url,
+        "df_html_output":df_html_output
+            }
+
+    db.mars.remove()
+    db.mars.insert_one({
+        "timestamp":timestamp,
+        "news_title":news_title,
+        "news_p":news_p,
+        "mars_weather":mars_weather,
+        "featured_image_url":featured_image_url,
+        "df_html_output":df_html_output
+            })
+
+    return jsonify(output)
+
+@app.route('/')
+
+def index():
+
+    from bson import BSON
+    from bson import json_util
+    import json
+    import pymongo
+    conn = 'mongodb://localhost:27017'
+    client = pymongo.MongoClient(conn)
+    db = client.marsDB   
+    x=db.mars.find() 
+    news_title=x[0]["news_title"]
+    news_p=x[0]["news_p"]
+    timestamp=x[0]["timestamp"]
+    mars_weather=x[0]["mars_weather"]
+    featured_image_url=x[0]["featured_image_url"]
+    df_html_output=x[0]["df_html_output"]
+
+    context = {
+                'news_title': news_title, 
+                'news_p': news_p,
+                'timestamp': timestamp, 
+                'mars_weather': mars_weather,
+                'featured_image_url': featured_image_url,
+                'df_html_output': df_html_output
+    }
+
+    front_page = render_template('jinja.html', **context)
+
+    return front_page
+    '''
+    for i in db.mars.find():
+        return json.dumps(i, indent=4, default=json_util.default)
+    '''
+
+#@TODO: Test all this
+
+if __name__ == "__main__":
+    app.run(debug=True)
+    raise NotImplementedError()

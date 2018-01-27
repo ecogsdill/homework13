@@ -1,0 +1,127 @@
+body {
+  background: #f1f1f1;
+  font-family: Cambria, Cochin, Georgia, Times, Times New Roman, serif;
+  font-size: 18px;
+}
+
+h1 {
+  font-size: 80px;
+  color: rgb(64, 131, 109);
+}
+
+h2 {
+  font-size: 60px;
+  color: rgb(64, 131, 109);
+}
+
+h3 {
+  font-size: 30px;
+  color: rgb(64, 131, 109);
+}
+
+/* Giving our navbar some padding and a background color */
+.navbar {
+  padding: 10px;
+}
+
+/* Making our navbar li's inline-block elements this makes it so we can have multiple on the same line. Floats could have been used too */
+.navbar li {
+  display: inline-block;
+  padding: 10px;
+  margin-right: 10px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.navbar-brand {
+    background-color: rgb(64, 131, 109);
+    font-weight: bold;
+}
+
+#NavbarTitle {
+    color: white;
+}
+
+/* Styling the header, giving it a height, a background color, and some top padding */
+.header {
+  height: 200px;
+  padding-top: 20px;
+  background: #cdcdcd;
+}
+
+/* Centering our h1 tag inside our header, giving it a little padding, removing its margin */
+.header h1 {
+  padding: 60px;
+  margin: 0;
+  color: #000;
+  text-align: center;
+}
+
+/* Giving the .post element margin on 3 sides */
+.post {
+  margin-top: 50px;
+  margin-right: 100px;
+  margin-left: 100px;
+}
+
+
+
+img {
+  width: 100%;
+  height: 100%;
+  margin-top: 10px;
+}
+
+#MarsImage {
+  width: 100%;
+}
+
+.thumbnail_img {
+  padding: 5px;
+}
+
+#SummaryImage {
+float: left;
+max-width: 35%;
+max-height: 35%;
+}
+
+.smallscreen {
+  display: none;
+}
+
+#focus {
+  border: 5px solid rgb(64, 131, 109)
+}
+
+#DataWindow {
+  background-color: white;
+}
+
+.table {
+  margin-top:50px;
+  font-family: Arial, Helvetica, sans-serif
+}
+
+.header_row {
+  font-weight: bold;
+}
+
+.comparison_header {
+  text-align: center;
+}
+
+.greenheader {
+  font: rgb(64, 131, 109);
+}
+
+@media (max-width: 988px) {
+
+  .smallscreen {
+    display: block;
+  }
+
+  .bigscreen {
+    display: none
+  }
+}
